@@ -5,7 +5,8 @@ Version: 1.13.3
 Authors@R: c(
     person("Ellis", "Patrick", , "ellis.patrick@sydney.edu.au", role = c("aut", "cre")),
     person("Nicolas", "Canete", , "nicolas.canete@sydney.edu.au", role = "aut"),
-    person("Nicholas", "Robertson", , "nicholas.robertson@sydney.edu.au", role = "ctb")
+    person("Nicholas", "Robertson", , "nicholas.robertson@sydney.edu.au", role = "ctb"),
+    person("Alex", "Qin", , "alex.qin@sydney.edu.au", role = "ctb")
   )
 Description: lisaClust provides a series of functions to identify and visualise 
     regions of tissue where spatial associations between cell-types is similar.
@@ -42,5 +43,11 @@ Imports:
     SummarizedExperiment,
     pheatmap,
     spatstat.random
-Suggests: BiocStyle, knitr, rmarkdown, SpatialDatasets
+Suggests: 
+    BiocStyle,
+    knitr,
+    rmarkdown,
+    SpatialDatasets,
+    testthat (>= 3.0.0)
 RoxygenNote: 7.3.1
+Config/testthat/edition: 3

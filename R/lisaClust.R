@@ -53,46 +53,46 @@
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom stats kmeans
 lisaClust <-
-    function(cells,
-             k = 2,
-             Rs = NULL,
-             spatialCoords = c("x", "y"),
-             cellType = "cellType",
-             imageID = "imageID",
-             regionName = "region",
-             BPPARAM = BiocParallel::SerialParam(),
-             window = "convex",
-             window.length = NULL,
-             whichParallel = "imageID",
-             sigma = NULL,
-             lisaFunc = "K",
-             minLambda = 0.05,
-             fast = TRUE) {
-        if (methods::is(cells, "SummarizedExperiment")) {
-            cd <- spicyR:::.format_data(
-                cells, imageID, cellType, spatialCoords, FALSE
-            )
-
-            lisaCurves <- lisa(cd,
-                Rs = Rs,
-                BPPARAM = BPPARAM,
-                window = window,
-                window.length = window.length,
-                whichParallel = whichParallel,
-                sigma = sigma,
-                lisaFunc = lisaFunc,
-                minLambda = minLambda,
-                fast = fast
-            )
-            kM <- kmeans(lisaCurves, k)
-            regions <- paste("region", kM$cluster, sep = "_")
-
-            SummarizedExperiment::colData(cells)[regionName] <- regions
-        } else if (is(cells, "data.frame")) {
-            cd <- cells
-            cd <- cd[, c(cellType, imageID, spatialCoords)]
-            colnames(cd) <- c("cellType", "imageID", "x", "y")
-            cd$cellID <- as.character(seq_len(nrow(cd)))
+  function(cells,
+           k = 2,
+           Rs = NULL,
+           spatialCoords = c("x", "y"),
+           cellType = "cellType",
+           imageID = "imageID",
+           regionName = "region",
+           BPPARAM = BiocParallel::SerialParam(),
+           window = "convex",
+           window.length = NULL,
+           whichParallel = "imageID",
+           sigma = NULL,
+           lisaFunc = "K",
+           minLambda = 0.05,
+           fast = TRUE) {
+    if (methods::is(cells, "SummarizedExperiment")) {
+      cd <- spicyR:::.format_data(
+        cells, imageID, cellType, spatialCoords, FALSE
+      )
+      
+      lisaCurves <- lisa(cd,
+                         Rs = Rs,
+                         BPPARAM = BPPARAM,
+                         window = window,
+                         window.length = window.length,
+                         whichParallel = whichParallel,
+                         sigma = sigma,
+                         lisaFunc = lisaFunc,
+                         minLambda = minLambda,
+                         fast = fast
+      )
+      kM <- kmeans(lisaCurves, k)
+      regions <- paste("region", kM$cluster, sep = "_")
+      
+      SummarizedExperiment::colData(cells)[regionName] <- regions
+    } else if (is(cells, "data.frame")) {
+      cd <- cells
+      cd <- cd[, c(cellType, imageID, spatialCoords)]
+      colnames(cd) <- c("cellType", "imageID", "x", "y")
+      cd$cellID <- as.character(seq_len(nrow(cd)))
             cd$imageCellID <- as.character(seq_len(nrow(cd)))
 
             lisaCurves <- lisa(cd,
