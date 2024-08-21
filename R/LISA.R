@@ -12,8 +12,6 @@
 #' @param sigma A numeric variable used for scaling when filting inhomogeneous L-curves.
 #' @param lisaFunc Either "K" or "L" curve.
 #' @param minLambda  Minimum value for density for scaling when fitting inhomogeneous L-curves.
-#' @param fast A logical describing whether to use a fast approximation of the
-#' inhomogeneous local L-curves.
 #' @param spatialCoords The columns which contain the x and y spatial coordinates.
 #' @param cellType The column which contains the cell types.
 #' @param imageID The column which contains image identifiers.
@@ -63,7 +61,6 @@ lisa <-
            sigma = NULL,
            lisaFunc = "K",
            minLambda = 0.05,
-           fast = TRUE,
            spatialCoords = c("x", "y"),
            cellType = "cellType",
            imageID = "imageID") {
