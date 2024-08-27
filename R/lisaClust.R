@@ -17,8 +17,6 @@
 #' @param sigma A numeric variable used for scaling when filting inhomogeneous L-curves.
 #' @param lisaFunc Either "K" or "L" curve.
 #' @param minLambda  Minimum value for density for scaling when fitting inhomogeneous L-curves.
-#' @param fast A logical describing whether to use a fast approximation of the
-#' inhomogeneous local L-curves.
 #'
 #' @return A matrix of LISA curves
 #'
@@ -66,8 +64,7 @@ lisaClust <-
            whichParallel = "imageID",
            sigma = NULL,
            lisaFunc = "K",
-           minLambda = 0.05,
-           fast = TRUE) {
+           minLambda = 0.05) {
     if (methods::is(cells, "SummarizedExperiment")) {
       cd <- spicyR:::.format_data(
         cells, imageID, cellType, spatialCoords, FALSE
@@ -81,8 +78,7 @@ lisaClust <-
                          whichParallel = whichParallel,
                          sigma = sigma,
                          lisaFunc = lisaFunc,
-                         minLambda = minLambda,
-                         fast = fast
+                         minLambda = minLambda
       )
       kM <- kmeans(lisaCurves, k)
       regions <- paste("region", kM$cluster, sep = "_")
@@ -103,8 +99,7 @@ lisaClust <-
                 whichParallel = whichParallel,
                 sigma = sigma,
                 lisaFunc = lisaFunc,
-                minLambda = minLambda,
-                fast = fast
+                minLambda = minLambda
             )
 
             kM <- kmeans(lisaCurves, k)

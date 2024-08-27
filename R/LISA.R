@@ -84,40 +84,21 @@ lisa <-
       BPcellType <- BPPARAM
     }
 
-    if (!fast) {
-      message("Generating local L-curves. ")
-      if (identical(BPimage, BPcellType)) {
-        message("You might like to consider setting BPPARAM to run the calculations in parallel.")
-      }
-      curveList <-
-        BiocParallel::bplapply(
-          cellSummary,
-          generateCurves,
-          Rs = Rs,
-          window = window,
-          window.length = window.length,
-          BPcellType = BPcellType,
-          BPPARAM = BPimage,
-          sigma = sigma
-        )
-    }
 
-    if (fast) {
-      message("Generating local L-curves. If you run out of memory, try 'fast = FALSE'.")
+    message("Generating local L-curves.")
 
-      curveList <-
-        BiocParallel::bplapply(
-          cellSummary,
-          inhomLocalK,
-          Rs = Rs,
-          sigma = sigma,
-          window = window,
-          window.length = window.length,
-          minLambda = minLambda,
-          lisaFunc = lisaFunc,
-          BPPARAM = BPimage
-        )
-    }
+    curveList <-
+      BiocParallel::bplapply(
+        cellSummary,
+        inhomLocalK,
+        Rs = Rs,
+        sigma = sigma,
+        window = window,
+        window.length = window.length,
+        minLambda = minLambda,
+        lisaFunc = lisaFunc,
+        BPPARAM = BPimage
+      )
 
     curvelist <- lapply(curveList, as.data.frame)
     curves <- as.matrix(dplyr::bind_rows(curvelist))
