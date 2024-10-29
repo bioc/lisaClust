@@ -66,6 +66,9 @@ lisaClust <-
            lisaFunc = "K",
            minLambda = 0.05) {
     if (methods::is(cells, "SummarizedExperiment")) {
+      
+      cells <- cells[,order(cells[[imageID]])]
+      
       cd <- spicyR:::.format_data(
         cells, imageID, cellType, spatialCoords, FALSE
       )
@@ -85,33 +88,36 @@ lisaClust <-
       
       SummarizedExperiment::colData(cells)[regionName] <- regions
     } else if (is(cells, "data.frame")) {
+      
+      cells <- cells[order(cells[[imageID]]),]
+      
       cd <- cells
       cd <- cd[, c(cellType, imageID, spatialCoords)]
       colnames(cd) <- c("cellType", "imageID", "x", "y")
       cd$cellID <- as.character(seq_len(nrow(cd)))
-            cd$imageCellID <- as.character(seq_len(nrow(cd)))
-
-            lisaCurves <- lisa(cd,
-                Rs = Rs,
-                BPPARAM = BPPARAM,
-                window = window,
-                window.length = window.length,
-                whichParallel = whichParallel,
-                sigma = sigma,
-                lisaFunc = lisaFunc,
-                minLambda = minLambda
-            )
-
-            kM <- kmeans(lisaCurves, k)
-            regions <- paste("region", kM$cluster, sep = "_")
-
-            cells[regionName] <- regions
-        } else {
-            stop(
-                "Unsupported datatype for cells: please use",
-                "SingleCellExperiment or SpatialExperiment"
-            )
-        }
-
-        cells
+      cd$imageCellID <- as.character(seq_len(nrow(cd)))
+      
+      lisaCurves <- lisa(cd,
+                         Rs = Rs,
+                         BPPARAM = BPPARAM,
+                         window = window,
+                         window.length = window.length,
+                         whichParallel = whichParallel,
+                         sigma = sigma,
+                         lisaFunc = lisaFunc,
+                         minLambda = minLambda
+      )
+      
+      kM <- kmeans(lisaCurves, k)
+      regions <- paste("region", kM$cluster, sep = "_")
+      
+      cells[regionName] <- regions
+    } else {
+      stop(
+        "Unsupported datatype for cells: please use",
+        "SingleCellExperiment or SpatialExperiment"
+      )
     }
+    
+    cells
+  }
