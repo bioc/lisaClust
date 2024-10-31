@@ -17,8 +17,6 @@
 #' @param sigma A numeric variable used for scaling when filting inhomogeneous L-curves.
 #' @param lisaFunc Either "K" or "L" curve.
 #' @param minLambda  Minimum value for density for scaling when fitting inhomogeneous L-curves.
-#' @param fast A logical describing whether to use a fast approximation of the
-#' inhomogeneous local L-curves.
 #'
 #' @return A matrix of LISA curves
 #'
@@ -53,70 +51,73 @@
 #' @importFrom SpatialExperiment spatialCoords
 #' @importFrom stats kmeans
 lisaClust <-
-    function(cells,
-             k = 2,
-             Rs = NULL,
-             spatialCoords = c("x", "y"),
-             cellType = "cellType",
-             imageID = "imageID",
-             regionName = "region",
-             BPPARAM = BiocParallel::SerialParam(),
-             window = "convex",
-             window.length = NULL,
-             whichParallel = "imageID",
-             sigma = NULL,
-             lisaFunc = "K",
-             minLambda = 0.05,
-             fast = TRUE) {
-        if (methods::is(cells, "SummarizedExperiment")) {
-            cd <- spicyR:::.format_data(
-                cells, imageID, cellType, spatialCoords, FALSE
-            )
-
-            lisaCurves <- lisa(cd,
-                Rs = Rs,
-                BPPARAM = BPPARAM,
-                window = window,
-                window.length = window.length,
-                whichParallel = whichParallel,
-                sigma = sigma,
-                lisaFunc = lisaFunc,
-                minLambda = minLambda,
-                fast = fast
-            )
-            kM <- kmeans(lisaCurves, k)
-            regions <- paste("region", kM$cluster, sep = "_")
-
-            SummarizedExperiment::colData(cells)[regionName] <- regions
-        } else if (is(cells, "data.frame")) {
-            cd <- cells
-            cd <- cd[, c(cellType, imageID, spatialCoords)]
-            colnames(cd) <- c("cellType", "imageID", "x", "y")
-            cd$cellID <- as.character(seq_len(nrow(cd)))
-            cd$imageCellID <- as.character(seq_len(nrow(cd)))
-
-            lisaCurves <- lisa(cd,
-                Rs = Rs,
-                BPPARAM = BPPARAM,
-                window = window,
-                window.length = window.length,
-                whichParallel = whichParallel,
-                sigma = sigma,
-                lisaFunc = lisaFunc,
-                minLambda = minLambda,
-                fast = fast
-            )
-
-            kM <- kmeans(lisaCurves, k)
-            regions <- paste("region", kM$cluster, sep = "_")
-
-            cells[regionName] <- regions
-        } else {
-            stop(
-                "Unsupported datatype for cells: please use",
-                "SingleCellExperiment or SpatialExperiment"
-            )
-        }
-
-        cells
+  function(cells,
+           k = 2,
+           Rs = NULL,
+           spatialCoords = c("x", "y"),
+           cellType = "cellType",
+           imageID = "imageID",
+           regionName = "region",
+           BPPARAM = BiocParallel::SerialParam(),
+           window = "convex",
+           window.length = NULL,
+           whichParallel = "imageID",
+           sigma = NULL,
+           lisaFunc = "K",
+           minLambda = 0.05) {
+    if (methods::is(cells, "SummarizedExperiment")) {
+      
+      cells <- cells[,order(cells[[imageID]])]
+      
+      cd <- spicyR:::.format_data(
+        cells, imageID, cellType, spatialCoords, FALSE
+      )
+      
+      lisaCurves <- lisa(cd,
+                         Rs = Rs,
+                         BPPARAM = BPPARAM,
+                         window = window,
+                         window.length = window.length,
+                         whichParallel = whichParallel,
+                         sigma = sigma,
+                         lisaFunc = lisaFunc,
+                         minLambda = minLambda
+      )
+      kM <- kmeans(lisaCurves, k)
+      regions <- paste("region", kM$cluster, sep = "_")
+      
+      SummarizedExperiment::colData(cells)[regionName] <- regions
+    } else if (is(cells, "data.frame")) {
+      
+      cells <- cells[order(cells[[imageID]]),]
+      
+      cd <- cells
+      cd <- cd[, c(cellType, imageID, spatialCoords)]
+      colnames(cd) <- c("cellType", "imageID", "x", "y")
+      cd$cellID <- as.character(seq_len(nrow(cd)))
+      cd$imageCellID <- as.character(seq_len(nrow(cd)))
+      
+      lisaCurves <- lisa(cd,
+                         Rs = Rs,
+                         BPPARAM = BPPARAM,
+                         window = window,
+                         window.length = window.length,
+                         whichParallel = whichParallel,
+                         sigma = sigma,
+                         lisaFunc = lisaFunc,
+                         minLambda = minLambda
+      )
+      
+      kM <- kmeans(lisaCurves, k)
+      regions <- paste("region", kM$cluster, sep = "_")
+      
+      cells[regionName] <- regions
+    } else {
+      stop(
+        "Unsupported datatype for cells: please use",
+        "SingleCellExperiment or SpatialExperiment"
+      )
     }
+    
+    cells
+  }

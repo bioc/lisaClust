@@ -14,7 +14,6 @@ lisa(
   sigma = NULL,
   lisaFunc = "K",
   minLambda = 0.05,
-  fast = TRUE,
   spatialCoords = c("x", "y"),
   cellType = "cellType",
   imageID = "imageID"
@@ -41,9 +40,6 @@ the cellType.}
 \item{lisaFunc}{Either "K" or "L" curve.}
 
 \item{minLambda}{Minimum value for density for scaling when fitting inhomogeneous L-curves.}
-
-\item{fast}{A logical describing whether to use a fast approximation of the
-inhomogeneous local L-curves.}
 
 \item{spatialCoords}{The columns which contain the x and y spatial coordinates.}
 

@@ -18,8 +18,7 @@ lisaClust(
   whichParallel = "imageID",
   sigma = NULL,
   lisaFunc = "K",
-  minLambda = 0.05,
-  fast = TRUE
+  minLambda = 0.05
 )
 }
 \arguments{
@@ -53,9 +52,6 @@ the cellType.}
 \item{lisaFunc}{Either "K" or "L" curve.}
 
 \item{minLambda}{Minimum value for density for scaling when fitting inhomogeneous L-curves.}
-
-\item{fast}{A logical describing whether to use a fast approximation of the
-inhomogeneous local L-curves.}
 }
 \value{
 A matrix of LISA curves

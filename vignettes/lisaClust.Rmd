@@ -16,13 +16,16 @@ author:
   - &WIMR Westmead Institute for Medical Research, University of Sydney, Australia
   - School of Mathematics and Statistics, University of Sydney, Australia
   email: alex.qin@sydney.edu.au
-package: "`r BiocStyle::pkg_ver('spicyR')`"
+package: "`r BiocStyle::pkg_ver('lisaClust')`"
+abstract: > 
+  Identify and visualise regions of cell type colocalization in multiplexed imaging data that has been segmented at a single-cell resolution.
 vignette: >
   %\VignetteIndexEntry{"Inroduction to lisaClust"}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 output: 
   BiocStyle::html_document
+bibliography: REFERENCES.bib
 editor_options: 
   markdown: 
     wrap: 72
@@ -71,7 +74,7 @@ microenvironments.
 
 ## Generate toy data
 
-TO illustrate our `lisaClust` framework, here we consider a very simple
+To illustrate our `lisaClust` framework, we consider a very simple
 toy example where two cell-types are completely separated spatially. We
 simulate data for two different images.
 
@@ -108,13 +111,12 @@ SCE
 ## Running lisaCLust
 
 We can then use the convenience function `lisaClust` to simultaneously
-calculate local indicators of spatial association (LISA) functions using
-the `lisa` function and perform k-means clustering. The number of
-clusters can be specified with the `k =` parameter. In the example
-below, we've chosen `k = 2`, resulting in a total of 2 clusters.
+calculate local indicators of spatial association (LISA) functions and perform 
+k-means clustering. The number of clusters can be specified with the `k =` parameter. 
+In the example below, we've chosen `k = 2`, resulting in a total of 2 clusters. The cell type column can be specified using the `cellType = ` argument. By default, `lisaClust` uses the column named `cellType`.
 
-These clusters are stored in `colData` of the `SingleCellExperiment`
-object, as a new column with the column name `regions`.
+The clusters identified by `lisaClust` are stored in `colData` of the `SingleCellExperiment`
+object as a new column called `regions`.
 
 ```{r}
 SCE <- lisaClust(SCE, k = 2)
@@ -154,12 +156,14 @@ that will be calculated over can be set with `Rs`.
 
 ```{r}
 lisaCurves <- lisa(SCE, Rs = c(20, 50, 100))
+
+head(lisaCurves)
 ```
 
 ### Perform some clustering
 
 The LISA curves can then be used to cluster the cells. Here we use k-means 
-clustering, other clustering methods like SOM could be used. We can store these 
+clustering. However, other clustering methods like SOM could also be used. We can store these 
 cell clusters or cell "regions" in our `SingleCellExperiment` object.
 
 ```{r}
@@ -174,7 +178,7 @@ colData(SCE) |> head()
 
 # Keren et al. breast cancer data.
 
-Next, we apply our `lisaClust` framework to two images of breast cancer from *A Structured Tumor-Immune Microenvironment in Triple Negative Breast Cancer Revealed by Multiplexed Ion Beam Imaging* by Keren et al. (2018)
+Next, we apply our `lisaClust` framework to two images of breast cancer obtained by @keren2018.
 
 ## Read in data
 
@@ -193,7 +197,7 @@ move directly to performing k-means clustering on the local indicators of
 spatial association (LISA) functions using the `lisaClust` function, remembering
 to specify the `imageID`, `cellType`, and `spatialCoords` 
 columns in `colData`. For the purpose of demonstration, we will be using
-only images 5 & 6 of the `kerenSPE` dataset.
+only images 5 and 6 of the `kerenSPE` dataset.
 
 ```{r}
 kerenSPE <- kerenSPE[,kerenSPE$imageID %in% c("5", "6")]
@@ -218,10 +222,10 @@ which cell types appear more frequently in each region than expected by chance.
 
 Here, we clearly see that healthy epithelial and mesenchymal tissue are highly
 concentrated in region 1, immune cells are concentrated in regions 2 and 4, 
-whilst tumour cells are spread out across regions 3 and 5.
+whilst tumour cells are concentrated in region 3.
 
-We can further segregate these cells by increasing the number of clusters, ie.
-increasing the parameter `k = ` in the `lisaClust()` function, but for the purposes
+We can further segregate these cells by increasing the number of clusters, i.e.,
+increasing the parameter `k = ` in the `lisaClust()` function. For the purposes
 of demonstration, let's take a look at the `hatchingPlot` of these regions.
 
 ```{r}
@@ -236,9 +240,12 @@ Finally, we can use `hatchingPlot` to construct a `ggplot` object where
 the regions are marked by different hatching patterns. This allows us to
 visualize the 5 regions and 17 cell-types simultaneously.
 
-```{r}
-hatchingPlot(kerenSPE)
+```{r fig.height=7, fig.width=9}
+hatchingPlot(kerenSPE, nbp = 300)
 ```
+
+# References
+
 
 # sessionInfo()
 
