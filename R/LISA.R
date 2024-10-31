@@ -1,3 +1,4 @@
+
 #' Generate local indicators of spatial association
 #'
 #' @param cells A SingleCellExperiment, SpatialExperiment or data frame that contains at least the
@@ -71,11 +72,11 @@ lisa <-
     }
     
     cellSummary <- spicyR:::getCellSummary(cells, bind = FALSE)
-
+    
     if (is.null(Rs)) {
       Rs <- c(20, 50, 100)
     }
-
+    
     BPimage <- BPcellType <- BiocParallel::SerialParam()
     if (whichParallel == "imageID") {
       BPimage <- BPPARAM
@@ -83,10 +84,10 @@ lisa <-
     if (whichParallel == "cellType") {
       BPcellType <- BPPARAM
     }
-
-
+    
+    
     message("Generating local L-curves.")
-
+    
     curveList <-
       BiocParallel::bplapply(
         cellSummary,
@@ -99,11 +100,11 @@ lisa <-
         lisaFunc = lisaFunc,
         BPPARAM = BPimage
       )
-
+    
     curvelist <- lapply(curveList, as.data.frame)
     curves <- as.matrix(dplyr::bind_rows(curvelist))
     rownames(curves) <- as.character(unlist(lapply(cellSummary, function(x) x$cellID)))
-
+    
     curves[is.na(curves)] <- 0
     return(curves)
   }
@@ -120,7 +121,7 @@ pppGenerate <- function(cells, window, window.length) {
     window = ow,
     marks = cells$cellType
   )
-
+  
   pppCell
 }
 
@@ -133,7 +134,7 @@ makeWindow <-
     data <- data.frame(data)
     ow <-
       spatstat.geom::owin(xrange = range(data$x), yrange = range(data$y))
-
+    
     if (window == "convex") {
       p <- spatstat.geom::ppp(data$x, data$y, ow)
       ow <- spatstat.geom::convexhull(p)
@@ -155,8 +156,8 @@ makeWindow <-
         }))
       ch <-
         concaveman::concaveman(bigDat,
-          length_threshold = window.length,
-          concavity = 1
+                               length_threshold = window.length,
+                               concavity = 1
         )
       poly <- as.data.frame(ch[nrow(ch):1, ])
       colnames(poly) <- c("x", "y")
@@ -186,7 +187,7 @@ borderEdge <- function(X, maxD) {
     areas <- unlist(lapply(circs, spatstat.geom::area)) / (pi * maxD^2)
     e[inB] <- areas
   }
-
+  
   e
 }
 
@@ -213,13 +214,13 @@ generateCurves <-
         window = ow,
         marks = data$cellType
       )
-
+    
     if (!is.null(sigma)) {
       d <- spatstat.explore::density.ppp(p1, sigma = sigma)
       d <- d / mean(d)
     }
-
-
+    
+    
     locIJ <-
       BiocParallel::bplapply(as.list(levels(p1$marks)), function(j) {
         locI <- lapply(as.list(levels(p1$marks)), function(i) {
@@ -227,7 +228,7 @@ generateCurves <-
           jID <- data$cellID[p1$marks == j]
           locR <- matrix(NA, length(iID), length(Rs))
           rownames(locR) <- iID
-
+          
           if (length(jID) > 1 & length(iID) > 1) {
             if (!is.null(sigma)) {
               dFrom <- d * (sum(p1$marks == i) - 1) / spatstat.geom::area(ow)
@@ -266,7 +267,7 @@ generateCurves <-
           }
           colnames(locR) <-
             paste(j, round(Rs, 2), sep = "_")
-
+          
           locR
         })
         do.call("rbind", locI)
@@ -279,16 +280,16 @@ sqrtVar <- function(x) {
   len <- 1000
   lambda <- (seq(1, 300, length.out = len) / 100)^x
   mL <- max(lambda)
-
-
+  
+  
   V <- NULL
   for (i in 1:len) {
     V[i] <- var(sqrt(rpois(10000, lambda[i])))
   }
-
+  
   lambda <- lambda^(1 / x)
   V <- V
-
+  
   f <- loess(V ~ lambda, span = 0.1)
 }
 
@@ -297,25 +298,25 @@ sqrtVar <- function(x) {
 #' @importFrom spatstat.geom nearest.valid.pixel area marks
 weightCounts <- function(dt, X, maxD, lam) {
   maxD <- as.numeric(as.character(maxD))
-
+  
   # edge correction
   e <- borderEdge(X, maxD)
-
+  
   # lambda <- as.vector(e%*%t(maxD^2*lam*pi))
   # pred <- predict(fit,lambda^(1/4))
   # pred[lambda < 0.001] = (lambda - 4*lambda^2)[lambda < 0.001]
   # pred[lambda > mL^(1/4)] = 0.25
   # V <- e%*%t(maxD^2*lam*pi)
   # V[] <- pred
-
-
+  
+  
   lambda <- as.vector(maxD^2 * lam * pi)
   names(lambda) <- names(lam)
   LE <- (e) %*% t(lambda)
   mat <- apply(dt, 2, function(x) x)
   mat <- ((mat) - (LE))
   mat <- mat / sqrt(LE)
-
+  
   #   # plot(apply(mat,2,sd))
   #   # plot(apply(mat,2,mean))
   colnames(mat) <- paste(maxD, colnames(mat), sep = "_")
@@ -380,42 +381,42 @@ inhomLocalK <-
         window = ow,
         marks = data$cellType
       )
-
+    
     if (is.null(Rs)) {
       Rs <- c(20, 50, 100, 200)
     }
     if (is.null(sigma)) {
       sigma <- 100000
     }
-
+    
     maxR <- min(ow$xrange[2] - ow$xrange[1], ow$yrange[2] - ow$yrange[1]) / 2.01
     Rs <- unique(pmin(c(0, sort(Rs)), maxR))
-
+    
     den <- spatstat.explore::density.ppp(X, sigma = sigma)
     den <- den / mean(den)
     den$v <- pmax(den$v, minLambda)
-
+    
     p <- spatstat.geom::closepairs(X, max(Rs), what = "ijd")
     n <- X$n
     p$j <- data$cellID[p$j]
     p$i <- data$cellID[p$i]
-
+    
     cT <- data$cellType
     names(cT) <- data$cellID
-
+    
     p$d <- cut(p$d, Rs, labels = Rs[-1], include.lowest = TRUE)
-
+    
     # inhom density
     np <- spatstat.geom::nearest.valid.pixel(X$x, X$y, den)
     w <- den$v[cbind(np$row, np$col)]
     names(w) <- data$cellID
     p$wt <- 1 / w[p$j] * mean(w)
     rm(np)
-
+    
     lam <- table(data$cellType) / spatstat.geom::area(X)
-
-
-
+    
+    
+    
     p$cellTypeJ <- cT[p$j]
     p$cellTypeI <- cT[p$i]
     p$i <- factor(p$i, levels = data$cellID)
@@ -424,21 +425,21 @@ inhomLocalK <-
     colnames(edge) <- Rs[-1]
     edge$i <- data$cellID
     edge <- tidyr::pivot_longer(edge, -i, names_to = "d")
-
+    
     p <- dplyr::left_join(as.data.frame(p), edge, c("i", "d"))
     p$d <- factor(p$d, levels = Rs[-1])
-
-
-
+    
+    
+    
     p <- as.data.frame(p)
-
+    
     if (lisaFunc == "K") {
       r <- getK(p, lam)
     }
     if (lisaFunc == "L") {
       r <- getL(p, lam)
     }
-
+    
     as.matrix(r[data$cellID, ])
   }
 
@@ -458,11 +459,11 @@ getK <-
     r$wt <- (r$wt - E) / sqrt(E)
     r <- r[, value := NULL]
     r <- data.table::dcast(r, i ~ d + cellTypeJ, value.var = "wt")
-
+    
     r <- as.data.frame(r)
     rownames(r) <- r$i
     r <- r[, -1]
-
+    
     r
   }
 
@@ -482,11 +483,11 @@ getL <-
     r$wt <- sqrt(r$wt) - sqrt(E)
     r <- r[, value := NULL]
     r <- data.table::dcast(r, i ~ d + cellTypeJ, value.var = "wt")
-
+    
     r <- as.data.frame(r)
     rownames(r) <- r$i
     r <- r[, -1]
-
+    
     r
   }
 
@@ -535,16 +536,16 @@ regionMap <- function(cells, type = "bubble", cellType = "cellType", region = "r
   if (is.data.frame(cells)) {
     df <- cells[, c(cellType, region)]
   }
-
+  
   if (is(cells, "SingleCellExperiment") | is(cells, "SpatialExperiment")) {
     df <- as.data.frame(SummarizedExperiment::colData(cells))[, c(cellType, region)]
   }
-
+  
   tab <- table(df[, cellType], df[, region])
   tab <- tab / rowSums(tab) %*% t(colSums(tab)) * sum(tab)
-
+  
   ph <- pheatmap::pheatmap(pmax(pmin(tab, limit[2]), limit[1]), cluster_cols = FALSE, silent = TRUE, ...)
-
+  
   if (type == "bubble") {
     p1 <- tab |>
       as.data.frame() |>
@@ -554,9 +555,9 @@ regionMap <- function(cells, type = "bubble", cellType = "cellType", region = "r
       ggplot2::scale_colour_gradient2(low = "#4575B4", mid = "grey90", high = "#D73027", midpoint = 1, guide = "legend") +
       ggplot2::theme_minimal() +
       ggplot2::labs(x = "Region", y = "Cell-type", colour = "Relative\nFrequency", size = "Relative\nFrequency")
-
+    
     return(p1)
   }
-
+  
   pheatmap::pheatmap(pmax(pmin(tab, limit[2]), limit[1]), cluster_cols = FALSE, ...)
 }
