@@ -5,7 +5,7 @@ test_that(
     set.seed(51773)
     
     kerenSPE <- SpatialDatasets::spe_Keren_2018()
-    kerenSPE <- kerenSPE[,kerenSPE$imageID %in% c("5", "6")]
+    kerenSPE <- kerenSPE[,colData(kerenSPE)$imageID %in% c("5", "6")]
     kerenSPE <- suppressWarnings(lisaClust(kerenSPE, k = 5)) |>
       colData()
     

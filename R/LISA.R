@@ -1,10 +1,13 @@
-
 #' Generate local indicators of spatial association
 #'
 #' @param cells A SingleCellExperiment, SpatialExperiment or data frame that contains at least the
 #' variables x and y, giving the  coordinates of each cell, imageID and cellType.
 #' @param Rs A vector of the radii that the measures of association should be calculated.
-#' @param BPPARAM A BiocParallelParam object.
+#' @param imageID The column which contains image identifiers.
+#' @param cellType The column which contains the cell types.
+#' @param spatialCoords The columns which contain the x and y spatial coordinates.
+#' @param cores Number of cores to use for parallel processing, or a BiocParallel
+#' MulticoreParam or SerialParam object.
 #' @param window Should the window around the regions be 'square', 'convex' or 'concave'.
 #' @param window.length A tuning parameter for controlling the level of concavity
 #' when estimating concave windows.
@@ -13,9 +16,6 @@
 #' @param sigma A numeric variable used for scaling when filting inhomogeneous L-curves.
 #' @param lisaFunc Either "K" or "L" curve.
 #' @param minLambda  Minimum value for density for scaling when fitting inhomogeneous L-curves.
-#' @param spatialCoords The columns which contain the x and y spatial coordinates.
-#' @param cellType The column which contains the cell types.
-#' @param imageID The column which contains image identifiers.
 #'
 #' @return A matrix of LISA curves
 #'
@@ -48,66 +48,108 @@
 #' @export
 #' @rdname lisa
 #' @importFrom methods is
-#' @importFrom BiocParallel SerialParam bplapply
+#' @importFrom BiocParallel MulticoreParam bplapply
 #' @importFrom S4Vectors DataFrame
 #' @importFrom BiocGenerics do.call rbind
 #' @importFrom dplyr bind_rows
-lisa <-
-  function(cells,
-           Rs = NULL,
-           BPPARAM = BiocParallel::SerialParam(),
-           window = "convex",
-           window.length = NULL,
-           whichParallel = "imageID",
-           sigma = NULL,
-           lisaFunc = "K",
-           minLambda = 0.05,
-           spatialCoords = c("x", "y"),
-           cellType = "cellType",
-           imageID = "imageID") {
-    if (methods::is(cells, "SummarizedExperiment")) {
-      cells <- spicyR:::.format_data(
-        cells, imageID, cellType, spatialCoords, FALSE
-      )
+lisa <- function(cells,
+                 Rs = NULL,
+                 imageID = "imageID",
+                 cellType = "cellType",
+                 spatialCoords = c("x", "y"),
+                 cores = 1,
+                 window = "convex",
+                 window.length = NULL,
+                 whichParallel = "imageID",
+                 sigma = NULL,
+                 lisaFunc = "K",
+                 minLambda = 0.05,
+                 BPPARAM = BiocParallel::SerialParam()) {
+  
+  user_args = as.list(match.call())[-1]
+  
+  tryCatch({
+    user_vals = lapply(names(user_args), function(arg) {
+      if (arg %in% c("BPPARAM", "cores")) {
+        eval(user_args[[arg]])
+      } 
+    })
+    
+    names(user_vals) = names(user_args)
+    
+    if (length(user_vals) > 0 && any(!sapply(user_vals, is.null))) {
+      argumentChecks("lisaClust", user_vals)
     }
-    
-    cellSummary <- spicyR:::getCellSummary(cells, bind = FALSE)
-    
-    if (is.null(Rs)) {
-      Rs <- c(20, 50, 100)
+  }, error = function(e) {
+    if (grepl("object 'cd' not found", e$message)) {
+      message("Skipping argument checks as `lisa()` is being called within `lisaClust()`")
+    } else {
+      stop(e)
     }
-    
-    BPimage <- BPcellType <- BiocParallel::SerialParam()
-    if (whichParallel == "imageID") {
-      BPimage <- BPPARAM
-    }
-    if (whichParallel == "cellType") {
-      BPcellType <- BPPARAM
-    }
-    
-    
-    message("Generating local L-curves.")
-    
-    curveList <-
-      BiocParallel::bplapply(
-        cellSummary,
-        inhomLocalK,
-        Rs = Rs,
-        sigma = sigma,
-        window = window,
-        window.length = window.length,
-        minLambda = minLambda,
-        lisaFunc = lisaFunc,
-        BPPARAM = BPimage
-      )
-    
-    curvelist <- lapply(curveList, as.data.frame)
-    curves <- as.matrix(dplyr::bind_rows(curvelist))
-    rownames(curves) <- as.character(unlist(lapply(cellSummary, function(x) x$cellID)))
-    
-    curves[is.na(curves)] <- 0
-    return(curves)
+  })
+  
+  if (is(cells, "SummarizedExperiment")) {
+    cols = colnames(colData(cells))
+  } else if (is(cells, "data.frame")) {
+    cols = colnames(cells)
+  } else {
+    stop("Data must be in the form of a SingleCellExperiment, SpatialExperiment, or data frame.")
   }
+  
+  if (!(imageID %in% cols)) {
+    stop(paste0("'", imageID, "' column not found in data"))
+  }
+  
+  if (!(cellType %in% cols)) {
+    stop(paste0("'", cellType, "' column not found in data"))
+  }
+  
+  if (methods::is(cells, "SummarizedExperiment")) {
+    cells <- spicyR:::.format_data(
+      cells, imageID, cellType, spatialCoords, FALSE
+    )
+  }
+  
+  cellSummary <- spicyR:::getCellSummary(cells, bind = FALSE)
+  
+  if (is.null(Rs)) {
+    Rs <- c(20, 50, 100)
+  }
+  
+  if (is(cores, "numeric")) {
+    cores = BiocParallel::MulticoreParam(workers = cores)
+  } 
+  
+  if (whichParallel == "imageID") {
+    BPimage <- cores
+  }
+  if (whichParallel == "cellType") {
+    BPcellType <- cores
+  }
+  
+  
+  message("Generating local L-curves.")
+  
+  curveList <-
+    BiocParallel::bplapply(
+      cellSummary,
+      inhomLocalK,
+      Rs = Rs,
+      sigma = sigma,
+      window = window,
+      window.length = window.length,
+      minLambda = minLambda,
+      lisaFunc = lisaFunc,
+      BPPARAM = cores
+    )
+  
+  curvelist <- lapply(curveList, as.data.frame)
+  curves <- as.matrix(dplyr::bind_rows(curvelist))
+  rownames(curves) <- as.character(unlist(lapply(cellSummary, function(x) x$cellID)))
+  
+  curves[is.na(curves)] <- 0
+  return(curves)
+}
 
 
 

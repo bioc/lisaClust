@@ -4,11 +4,12 @@
 #' variables x and y, giving the  coordinates of each cell, imageID and cellType.
 #' @param k The number of regions to cluster.
 #' @param Rs A vector of the radii that the measures of association should be calculated.
-#' @param spatialCoords The columns which contain the x and y spatial coordinates.
-#' @param cellType The column which contains the cell types.
 #' @param imageID The column which contains image identifiers.
+#' @param cellType The column which contains the cell types.
+#' @param spatialCoords The columns which contain the x and y spatial coordinates.
 #' @param regionName The output column for the lisaClust regions.
-#' @param BPPARAM A BiocParallelParam object.
+#' @param cores Number of cores to use for parallel processing, or a BiocParallel 
+#' MulticoreParam or SerialParam object.
 #' @param window Should the window around the regions be 'square', 'convex' or 'concave'.
 #' @param window.length A tuning parameter for controlling the level of concavity
 #' when estimating concave windows.
@@ -49,33 +50,60 @@
 #' @rdname lisaClust
 #' @importFrom SummarizedExperiment colData
 #' @importFrom SpatialExperiment spatialCoords
+#' @importFrom BiocParallel MulticoreParam
 #' @importFrom stats kmeans
 lisaClust <-
   function(cells,
            k = 2,
            Rs = NULL,
-           spatialCoords = c("x", "y"),
-           cellType = "cellType",
            imageID = "imageID",
+           cellType = "cellType",
+           spatialCoords = c("x", "y"),
            regionName = "region",
-           BPPARAM = BiocParallel::SerialParam(),
+           cores = 1,
            window = "convex",
            window.length = NULL,
-           whichParallel = "imageID",
+           whichParallel = "imimageID",
            sigma = NULL,
            lisaFunc = "K",
-           minLambda = 0.05) {
+           minLambda = 0.05,
+           BPPARAM = BiocParallel::SerialParam()) {
+    
+    user_args = as.list(match.call())[-1]
+    
+    user_vals = lapply(names(user_args), function(arg) {
+      if (arg %in% c("BPPARAM", "cores")) {
+        eval(user_args[[arg]])
+      } 
+    })
+    
+    names(user_vals) = names(user_args)
+    argumentChecks("lisaClust", user_vals)
+  
+    if (is(cells, "SummarizedExperiment")) {
+      cols = colnames(colData(cells))
+    } else if (is(cells, "data.frame")) {
+      cols = colnames(cells)
+    } else {
+      stop("Data must be in the form of a SingleCellExperiment, SpatialExperiment, or data frame.")
+    }
+    
+    if (!(imageID %in% cols)) {
+      stop(paste0("'", imageID, "' column not found in data"))
+    }
+    
+    if (!(cellType %in% cols)) {
+      stop(paste0("'", cellType, "' column not found in data"))
+    }
+    
     if (methods::is(cells, "SummarizedExperiment")) {
-      
-      cells <- cells[,order(cells[[imageID]])]
-      
       cd <- spicyR:::.format_data(
         cells, imageID, cellType, spatialCoords, FALSE
       )
       
       lisaCurves <- lisa(cd,
                          Rs = Rs,
-                         BPPARAM = BPPARAM,
+                         cores = cores,
                          window = window,
                          window.length = window.length,
                          whichParallel = whichParallel,
@@ -88,9 +116,6 @@ lisaClust <-
       
       SummarizedExperiment::colData(cells)[regionName] <- regions
     } else if (is(cells, "data.frame")) {
-      
-      cells <- cells[order(cells[[imageID]]),]
-      
       cd <- cells
       cd <- cd[, c(cellType, imageID, spatialCoords)]
       colnames(cd) <- c("cellType", "imageID", "x", "y")
@@ -99,7 +124,7 @@ lisaClust <-
       
       lisaCurves <- lisa(cd,
                          Rs = Rs,
-                         BPPARAM = BPPARAM,
+                         cores = cores,
                          window = window,
                          window.length = window.length,
                          whichParallel = whichParallel,

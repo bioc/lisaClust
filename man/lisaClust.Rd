@@ -8,17 +8,18 @@ lisaClust(
   cells,
   k = 2,
   Rs = NULL,
-  spatialCoords = c("x", "y"),
-  cellType = "cellType",
   imageID = "imageID",
+  cellType = "cellType",
+  spatialCoords = c("x", "y"),
   regionName = "region",
-  BPPARAM = BiocParallel::SerialParam(),
+  cores = 1,
   window = "convex",
   window.length = NULL,
-  whichParallel = "imageID",
+  whichParallel = "imimageID",
   sigma = NULL,
   lisaFunc = "K",
-  minLambda = 0.05
+  minLambda = 0.05,
+  BPPARAM = BiocParallel::SerialParam()
 )
 }
 \arguments{
@@ -29,15 +30,16 @@ variables x and y, giving the  coordinates of each cell, imageID and cellType.}
 
 \item{Rs}{A vector of the radii that the measures of association should be calculated.}
 
-\item{spatialCoords}{The columns which contain the x and y spatial coordinates.}
+\item{imageID}{The column which contains image identifiers.}
 
 \item{cellType}{The column which contains the cell types.}
 
-\item{imageID}{The column which contains image identifiers.}
+\item{spatialCoords}{The columns which contain the x and y spatial coordinates.}
 
 \item{regionName}{The output column for the lisaClust regions.}
 
-\item{BPPARAM}{A BiocParallelParam object.}
+\item{cores}{Number of cores to use for parallel processing, or a BiocParallel 
+MulticoreParam or SerialParam object.}
 
 \item{window}{Should the window around the regions be 'square', 'convex' or 'concave'.}
 

@@ -6,7 +6,7 @@
 \title{hatchingPlot}
 \usage{
 hatchingPlot(
-  data,
+  cells,
   useImages = NULL,
   region = "region",
   imageID = "imageID",
@@ -37,14 +37,7 @@ geom_hatching(
 )
 }
 \arguments{
-\item{data}{The data to be displayed in this layer. There are three options:
-
-If NULL, the default, the data is inherited from the plot data as specified
-in the call to ggplot(). A data.frame, or other object, will override the plot
-data. All objects will be fortified to produce a data frame. See fortify() for
- which variables will be created. A function will be called with a single argument,
- the plot data. The return value must be a data.frame, and will be used as the
- layer data. A function can be created from a formula (e.g. ~ head(.x, 10)).}
+\item{cells}{A data.frame or SingleCellExperiment.}
 
 \item{useImages}{A vector of images to plot.}
 
@@ -70,6 +63,15 @@ when estimating concave windows.}
 \item{mapping}{Set of aesthetic mappings created by aes() or aes_(). If specified
 and inherit.aes = TRUE (the default), it is combined with the default mapping
 at the top level of the plot. You must supply mapping if there is no plot mapping.}
+
+\item{data}{The data to be displayed in this layer. There are three options:
+
+If NULL, the default, the data is inherited from the plot data as specified
+in the call to ggplot(). A data.frame, or other object, will override the plot
+data. All objects will be fortified to produce a data frame. See fortify() for
+ which variables will be created. A function will be called with a single argument,
+ the plot data. The return value must be a data.frame, and will be used as the
+ layer data. A function can be created from a formula (e.g. ~ head(.x, 10)).}
 
 \item{stat}{The statistical transformation to use on the data for this layer as a string.}
 

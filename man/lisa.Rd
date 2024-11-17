@@ -7,16 +7,17 @@
 lisa(
   cells,
   Rs = NULL,
-  BPPARAM = BiocParallel::SerialParam(),
+  imageID = "imageID",
+  cellType = "cellType",
+  spatialCoords = c("x", "y"),
+  cores = 1,
   window = "convex",
   window.length = NULL,
   whichParallel = "imageID",
   sigma = NULL,
   lisaFunc = "K",
   minLambda = 0.05,
-  spatialCoords = c("x", "y"),
-  cellType = "cellType",
-  imageID = "imageID"
+  BPPARAM = BiocParallel::SerialParam()
 )
 }
 \arguments{
@@ -25,7 +26,14 @@ variables x and y, giving the  coordinates of each cell, imageID and cellType.}
 
 \item{Rs}{A vector of the radii that the measures of association should be calculated.}
 
-\item{BPPARAM}{A BiocParallelParam object.}
+\item{imageID}{The column which contains image identifiers.}
+
+\item{cellType}{The column which contains the cell types.}
+
+\item{spatialCoords}{The columns which contain the x and y spatial coordinates.}
+
+\item{cores}{Number of cores to use for parallel processing, or a BiocParallel
+MulticoreParam or SerialParam object.}
 
 \item{window}{Should the window around the regions be 'square', 'convex' or 'concave'.}
 
@@ -40,12 +48,6 @@ the cellType.}
 \item{lisaFunc}{Either "K" or "L" curve.}
 
 \item{minLambda}{Minimum value for density for scaling when fitting inhomogeneous L-curves.}
-
-\item{spatialCoords}{The columns which contain the x and y spatial coordinates.}
-
-\item{cellType}{The column which contains the cell types.}
-
-\item{imageID}{The column which contains image identifiers.}
 }
 \value{
 A matrix of LISA curves
