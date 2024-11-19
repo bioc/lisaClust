@@ -18,6 +18,7 @@
 #' @param sigma A numeric variable used for scaling when filting inhomogeneous L-curves.
 #' @param lisaFunc Either "K" or "L" curve.
 #' @param minLambda  Minimum value for density for scaling when fitting inhomogeneous L-curves.
+#' @param BPPARAM \{DEPRECATED\} A BiocParalell MulticoreParam or SerialParam object.
 #'
 #' @return A matrix of LISA curves
 #'

@@ -48,6 +48,8 @@ the cellType.}
 \item{lisaFunc}{Either "K" or "L" curve.}
 
 \item{minLambda}{Minimum value for density for scaling when fitting inhomogeneous L-curves.}
+
+\item{BPPARAM}{\{DEPRECATED\} A BiocParallel MulticoreParam or SerialParam object.}
 }
 \value{
 A matrix of LISA curves
